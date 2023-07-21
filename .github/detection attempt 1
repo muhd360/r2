@@ -1,0 +1,52 @@
+#publisher node
+
+import rospy
+from geometry_msgs.msg import PoseStamped
+
+def position_callback(msg):
+    position = msg.pose.position
+    rospy.loginfo(f"Position: x={position.x}, y={position.y}, z={position.z}")
+
+def position_publisher():
+    rospy.init_node('position_publisher', anonymous=True)
+    pub = rospy.Publisher('/published_position', PoseStamped, queue_size=10)
+    rate = rospy.Rate(10)  
+    while not rospy.is_shutdown():
+        # Create a new PoseStamped message and populate it
+        pose_stamped_msg = PoseStamped()
+        pose_stamped_msg.header.stamp = rospy.Time.now()
+        pose_stamped_msg.header.frame_id = 'base_link'  
+        pose_stamped_msg.pose.position.x = x  
+        pose_stamped_msg.pose.position.y = y
+        pose_stamped_msg.pose.position.z = z
+        pub.publish(pose_stamped_msg)
+        rate.sleep()
+        x=int(input("enter val"))
+        y=int(input("enter val"))
+        z=int(input("enter val"))
+
+if __name__ == '__main__':
+    try:
+        position_publisher()
+    except rospy.ROSInterruptException:
+        pass
+
+
+#subscriber node
+import rospy
+from geometry_msgs.msg import PoseStamped
+
+def position_callback(msg):
+    position = msg.pose.position
+    rospy.loginfo(f"Position: x={position.x}, y={position.y}, z={position.z}")
+
+def position_detector():
+    rospy.init_node('position_detector', anonymous=True)
+    rospy.Subscriber('/robot_pose', PoseStamped, position_callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    position_detector()
+
+          
+          
