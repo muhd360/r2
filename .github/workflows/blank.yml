@@ -1,0 +1,59 @@
+#publisher node
+#for import moveit_commander do the foll:
+#https://moveit.ros.org/install/source/(as module of both c++ +python cant do import moveit at terminal)
+#camera topic instead of actual ros base to access camera
+
+
+
+import rospy
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+import cv2
+import moveit_commander
+from geometry_msgs.msg import PoseStamped
+
+class RoboticArmController:
+    def __init__(self):
+        rospy.init_node('robotic_arm_controller')
+        self.bridge = CvBridge()
+        self.camera_subscriber = rospy.Subscriber('/camera_topic', Image, self.camera_callback)
+        self.arm_group = moveit_commander.MoveGroupCommander("manipulator")
+
+    def camera_callback(self, data):
+        try:
+            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+            # Implement object detection to get target position and orientation in the image.
+            target_position, target_orientation = self.detect_object(cv_image)
+
+            if target_position is not None and target_orientation is not None:
+                self.move_to_target(target_position, target_orientation)
+        except Exception as e:
+            rospy.logerr(e)
+
+    def detect_object(self, cv_image):
+        # Implement your object detection algorithm here.
+        # Return the target position (x, y, z) and orientation (quaternion) if an object is detected, or None otherwise.
+        pass
+
+    def move_to_target(self, position, orientation):
+        target_pose = PoseStamped()
+        target_pose.header.frame_id = "base_link"
+        target_pose.pose.position.x = position[0]
+        target_pose.pose.position.y = position[1]
+        target_pose.pose.position.z = position[2]
+        target_pose.pose.orientation.x = orientation[0]
+        target_pose.pose.orientation.y = orientation[1]
+        target_pose.pose.orientation.z = orientation[2]
+        target_pose.pose.orientation.w = orientation[3]
+
+        self.arm_group.set_pose_target(target_pose)
+        plan = self.arm_group.go(wait=True)
+        self.arm_group.stop()
+        self.arm_group.clear_pose_targets()
+
+if __name__ == '__main__':
+    try:
+        controller = RoboticArmController()
+        rospy.spin()
+    except rospy.ROSInterruptException:
+        pass
